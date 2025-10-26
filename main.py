@@ -36,7 +36,8 @@ def sanitize_filename_for_dir(filename):
     return "".join(c if c.isalnum() or c in (' ', '_', '-') else '_' for c in filename).rstrip()
 
 def run_downloader():
-    manga_name_input = input("请输入要搜索和下载的漫画名称: ")
+    from metadata.utils import get_user_input
+    manga_name_input = get_user_input("请输入要搜索和下载的漫画名称: ")
     if not manga_name_input:
         logger.error("漫画名称不能为空。")
         return

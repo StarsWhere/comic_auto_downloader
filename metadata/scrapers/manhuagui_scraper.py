@@ -7,7 +7,7 @@ from ..config import BASE_URL_MANHUA, HEADERS
 
 def manhuagui_search_manga(manga_name):
     search_url = f"{BASE_URL_MANHUA}/s/{manga_name}.html"
-    print(f"Searching Manhuagui: {search_url}")
+    print(f"搜索 Manhuagui：{search_url}")
     try:
         response = requests.get(search_url, headers=HEADERS, timeout=15)
         response.raise_for_status()
@@ -98,11 +98,11 @@ def manhuagui_search_manga(manga_name):
         
         return final_unique_results
     except requests.exceptions.RequestException as e:
-        print(f"Error during Manhuagui search: {e}")
+        print(f"Manhuagui 搜索过程中出错：{e}")
         return []
 
 def manhuagui_get_manga_details(manga_url):
-    print(f"Fetching Manhuagui details from: {manga_url}")
+    print(f"从 Manhuagui 获取详情：{manga_url}")
     try:
         response = requests.get(manga_url, headers=HEADERS, timeout=15)
         response.raise_for_status()
@@ -181,8 +181,8 @@ def manhuagui_get_manga_details(manga_url):
             details['chapters_manhuagui'][chap_type] = unique_chaps
         return details
     except requests.exceptions.RequestException as e:
-        print(f"Error during Manhuagui details request: {e}")
+        print(f"Manhuagui 详情请求过程中出错：{e}")
         return None
     except Exception as e:
-        print(f"An error occurred parsing Manhuagui details: {e}")
+        print(f"解析 Manhuagui 详情时发生错误：{e}")
         return None

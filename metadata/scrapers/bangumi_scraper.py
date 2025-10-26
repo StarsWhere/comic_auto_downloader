@@ -6,7 +6,7 @@ from ..config import BANGUMI_BASE_URL, HEADERS
 
 def bangumi_search_subject(term):
     search_url = f"{BANGUMI_BASE_URL}/subject_search/{requests.utils.quote(term)}?cat=1" # cat=1 for Books (Manga)
-    print(f"Searching Bangumi: {search_url}")
+    print(f"搜索 Bangumi：{search_url}")
     try:
         response = requests.get(search_url, headers=HEADERS, timeout=15)
         response.raise_for_status()
@@ -45,13 +45,13 @@ def bangumi_search_subject(term):
 
         return results
     except requests.exceptions.RequestException as e:
-        print(f"Error searching Bangumi: {e}")
+        print(f"搜索 Bangumi 时出错：{e}")
         return []
 
 
 def bangumi_get_subject_details(subject_url):
     if not subject_url: return None
-    print(f"Fetching Bangumi subject details from: {subject_url}")
+    print(f"从 Bangumi 获取主题详情：{subject_url}")
     try:
         response = requests.get(subject_url, headers=HEADERS, timeout=15)
         response.raise_for_status()
@@ -128,8 +128,8 @@ def bangumi_get_subject_details(subject_url):
         details['infobox_bangumi'] = infobox_metadata
         return details
     except requests.exceptions.RequestException as e:
-        print(f"Error fetching Bangumi subject page: {e}")
+        print(f"获取 Bangumi 主题页面时出错：{e}")
         return None
     except Exception as e:
-        print(f"An error occurred parsing Bangumi subject page: {e}")
+        print(f"解析 Bangumi 主题页面时发生错误：{e}")
         return None

@@ -1,7 +1,9 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service as ChromeService
+from selenium.webdriver.edge.service import Service as EdgeService
 from webdriver_manager.chrome import ChromeDriverManager
+from webdriver_manager.microsoft import EdgeChromiumDriverManager
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException, WebDriverException, ElementClickInterceptedException
@@ -11,6 +13,7 @@ import os
 import re # 用于从URL提取数字
 import logging
 import io # 用于 BytesIO
+import shutil # 用于检查浏览器可执行文件
 
 # 配置日志记录
 logging.basicConfig(
@@ -21,6 +24,84 @@ logging.basicConfig(
     ]
 )
 logger = logging.getLogger(__name__)
+
+def detect_browsers():
+    """
+    检测系统中可用的浏览器
+    返回: {'chrome': path_or_none, 'edge': path_or_none}
+    """
+    browsers = {'chrome': None, 'edge': None}
+
+    # 常见的浏览器路径 (Windows)
+    possible_paths = {
+        'chrome': [
+            r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+            r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
+            os.path.expanduser(r"~\AppData\Local\Google\Chrome\Application\chrome.exe")
+        ],
+        'edge': [
+            r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
+            r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
+            os.path.expanduser(r"~\AppData\Local\Microsoft\Edge\Application\msedge.exe")
+        ]
+    }
+
+    for browser, paths in possible_paths.items():
+        for path in paths:
+            if os.path.exists(path):
+                browsers[browser] = path
+                break
+
+    return browsers
+
+# 全局变量存储用户选择的浏览器，避免重复询问
+_selected_browser = None
+
+def select_browser():
+    """
+    检测并选择要使用的浏览器
+    记住用户的选择，避免重复询问
+    返回: ('chrome' 或 'edge', driver_manager)
+    """
+    global _selected_browser
+    from metadata.utils import get_user_input
+
+    # 如果已经选择过，直接返回
+    if _selected_browser is not None:
+        return _selected_browser, None
+
+    browsers = detect_browsers()
+    available_browsers = {k: v for k, v in browsers.items() if v is not None}
+
+    if not available_browsers:
+        logger.error("未检测到 Chrome 或 Edge 浏览器。请安装其中一个浏览器后重试。")
+        logger.info("下载链接：")
+        logger.info("- Chrome: https://www.google.com/chrome/")
+        logger.info("- Edge: https://www.microsoft.com/en-us/edge")
+        return None, None
+
+    if len(available_browsers) == 1:
+        browser = list(available_browsers.keys())[0]
+        logger.info(f"检测到唯一可用的浏览器: {browser.capitalize()}")
+        _selected_browser = browser
+        return browser, None
+
+    # 两个浏览器都可用，让用户选择（只在第一次运行时）
+    logger.info("检测到多个可用浏览器:")
+    for i, (browser, path) in enumerate(available_browsers.items(), 1):
+        logger.info(f"{i}. {browser.capitalize()} ({path})")
+
+    while True:
+        choice = get_user_input("请选择要使用的浏览器 (输入对应的编号 1 或 2): ", valid_inputs=['1', '2'])
+        try:
+            choice_idx = int(choice) - 1
+            if 0 <= choice_idx < len(available_browsers):
+                selected_browser = list(available_browsers.keys())[choice_idx]
+                logger.info(f"已选择: {selected_browser.capitalize()}")
+                _selected_browser = selected_browser  # 记住选择
+                return selected_browser, None
+        except ValueError:
+            continue
 
 def isolate_element_js(driver, element_id):
     script = """
@@ -241,22 +322,35 @@ def capture_chapter_images(
     vertical_offset_compensation,
     base_output_dir="manga_chapters"
 ):
-    chrome_options = webdriver.ChromeOptions()
-    chrome_options.add_argument("--headless=new")
-    chrome_options.add_argument("--no-sandbox")
-    chrome_options.add_argument("--disable-dev-shm-usage")
-    chrome_options.add_argument("--disable-gpu")
-    chrome_options.add_argument("--force-device-scale-factor=1")
-    initial_window_width = 1920 
+    # 检测并选择浏览器
+    selected_browser, _ = select_browser()
+    if not selected_browser:
+        return False
+
+    # 根据选择的浏览器设置选项
+    if selected_browser == 'chrome':
+        options = webdriver.ChromeOptions()
+        service = ChromeService(ChromeDriverManager().install())
+        driver_class = webdriver.Chrome
+    else:  # edge
+        options = webdriver.ChromeOptions()  # Edge 使用相同的选项
+        service = EdgeService(EdgeChromiumDriverManager().install())
+        driver_class = webdriver.ChromiumEdge  # 或者 webdriver.Edge
+
+    options.add_argument("--headless=new")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--disable-gpu")
+    options.add_argument("--force-device-scale-factor=1")
+    initial_window_width = 1920
     initial_window_height = 1080
-    chrome_options.add_argument(f"--window-size={initial_window_width},{initial_window_height}")
+    options.add_argument(f"--window-size={initial_window_width},{initial_window_height}")
 
     driver = None
     chapter_fully_captured = True # 初始化成功标志
     try:
-        logger.info("正在初始化Chrome驱动程序以捕获章节...")
-        service = ChromeService(ChromeDriverManager().install())
-        driver = webdriver.Chrome(service=service, options=chrome_options)
+        logger.info(f"正在初始化{selected_browser.capitalize()}驱动程序以捕获章节...")
+        driver = driver_class(service=service, options=options)
         wait = WebDriverWait(driver, 60) 
 
         if urls_to_block:

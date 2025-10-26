@@ -14,7 +14,7 @@ import logging
 # import sys
 # sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) # Add parent dir (comic_auto_downloader)
 from metadata.config import HEADERS
-from metadata.utils import sanitize_filename, download_image, select_from_results
+from metadata.utils import sanitize_filename, download_image, select_from_results, get_user_input, get_user_confirmation
 from metadata.scrapers.manhuagui_scraper import manhuagui_search_manga, manhuagui_get_manga_details
 from metadata.scrapers.bangumi_scraper import bangumi_search_subject, bangumi_get_subject_details
 from metadata.scrapers.wikipedia_scraper import wikipedia_search_page, wikipedia_get_page_metadata
@@ -209,8 +209,7 @@ def get_or_fetch_manga_data(initial_manga_name, base_download_dir):
             chosen_manhuagui_item = item
         else:
             logger.info(f"Manhuagui 找到一个结果: '{item['title']}' (URL: {item['url']})")
-            confirm = input(f"这是您想要的漫画吗? (yes/no): ").lower()
-            if confirm == 'yes':
+            if get_user_confirmation(f"这是您想要的漫画吗? (yes/是/确认)"):
                 chosen_manhuagui_item = item
             else:
                 logger.info("用户拒绝了该结果。")
@@ -250,18 +249,16 @@ def get_or_fetch_manga_data(initial_manga_name, base_download_dir):
         logger.info(f"\n您已从 Manhuagui 选择了: '{chosen_manhuagui_item['title']}'")
         logger.info(f"您最初搜索的词是: '{initial_manga_name}'")
         while True:
-            choice = input("请选择用于后续平台 (Bangumi, Wikipedia) 搜索的标题:\n"
-                           f"1. 使用 Manhuagui 的标题: '{chosen_manhuagui_item['title']}'\n"
-                           f"2. 使用原始输入标题: '{initial_manga_name}'\n"
-                           "请输入选项 (1 或 2): ")
+            choice = get_user_input("请选择用于后续平台 (Bangumi, Wikipedia) 搜索的标题:\n"
+                                     f"1. 使用 Manhuagui 的标题: '{chosen_manhuagui_item['title']}'\n"
+                                     f"2. 使用原始输入标题: '{initial_manga_name}'\n"
+                                     "请输入选项 (1 或 2): ", valid_inputs=['1', '2'])
             if choice == '1':
                 search_term_for_next_steps = chosen_manhuagui_item['title']
                 break
             elif choice == '2':
                 search_term_for_next_steps = initial_manga_name
                 break
-            else:
-                logger.warning("无效输入，请输入 1 或 2。")
         logger.info(f"将使用 '{search_term_for_next_steps}' 进行后续搜索。")
     
     # Bangumi (Optional, can be made configurable)
@@ -273,8 +270,7 @@ def get_or_fetch_manga_data(initial_manga_name, base_download_dir):
     wiki_search_term = search_term_for_next_steps
     if bgm_meta and bgm_meta.get('title_bangumi') and bgm_meta['title_bangumi'].lower() != search_term_for_next_steps.lower():
         logger.info(f"检测到 Bangumi 标题 '{bgm_meta['title_bangumi']}' 与当前搜索词不同。")
-        use_bgm_title = input(f"是否使用 Bangumi 标题 '{bgm_meta['title_bangumi']}' 进行 Wikipedia 搜索? (yes/no): ").lower()
-        if use_bgm_title == 'yes':
+        if get_user_confirmation(f"是否使用 Bangumi 标题 '{bgm_meta['title_bangumi']}' 进行 Wikipedia 搜索? (输入 yes/是/确认 使用，其他则使用当前搜索词)"):
             wiki_search_term = bgm_meta['title_bangumi']
             logger.info(f"将使用 '{wiki_search_term}' 进行 Wikipedia 搜索。")
             
@@ -314,7 +310,7 @@ if __name__ == '__main__':
         os.makedirs(test_base_dir)
 
     # manga_to_test = "一人之下"
-    manga_to_test = input("请输入要测试的漫画名称: ")
+    manga_to_test = get_user_input("请输入要测试的漫画名称: ")
     
     # Clean up previous test run for this manga if it exists
     # test_manga_sanitized_name = sanitize_filename(manga_to_test) # This might not be the final dir name

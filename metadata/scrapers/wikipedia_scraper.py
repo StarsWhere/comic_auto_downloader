@@ -8,7 +8,7 @@ from ..config import WIKIPEDIA_API_URL, HEADERS
 
 def wikipedia_search_page(term):
     params = {"action": "query", "list": "search", "srsearch": term, "srlimit": 5, "format": "json"}
-    print(f"Searching Wikipedia: {WIKIPEDIA_API_URL} with term '{term}'")
+    print(f"在 Wikipedia 上搜索：{WIKIPEDIA_API_URL} 搜索词 '{term}'")
     try:
         response = requests.get(WIKIPEDIA_API_URL, params=params, headers=HEADERS, timeout=15)
         response.raise_for_status()
@@ -23,15 +23,15 @@ def wikipedia_search_page(term):
                 results.append({'title': page_title, 'url': page_url, 'snippet': snippet, 'source': 'wikipedia'})
         return results
     except requests.exceptions.RequestException as e:
-        print(f"Error searching Wikipedia API: {e}")
+        print(f"搜索 Wikipedia API 时出错：{e}")
         return []
     except json.JSONDecodeError:
-        print("Error decoding Wikipedia API search response.")
+        print("解码 Wikipedia API 搜索响应时出错。")
         return []
 
 def wikipedia_get_page_metadata(page_url):
     if not page_url: return None
-    print(f"Fetching Wikipedia page: {page_url}")
+    print(f"获取 Wikipedia 页面：{page_url}")
     try:
         response = requests.get(page_url, headers=HEADERS, timeout=15)
         response.raise_for_status()
@@ -43,8 +43,8 @@ def wikipedia_get_page_metadata(page_url):
 
         infobox = soup.find('table', class_=lambda x: x and 'infobox' in x)
         if not infobox:
-            print("Infobox not found on Wikipedia page.")
-            return metadata 
+            print("在 Wikipedia 页面上未找到信息框。")
+            return metadata
 
         metadata['infobox_image_urls_wikipedia'] = []
         image_links = infobox.select('a.image img')
@@ -101,8 +101,8 @@ def wikipedia_get_page_metadata(page_url):
                     metadata[f"{key}_wikipedia"] = clean_value
         return metadata
     except requests.exceptions.RequestException as e:
-        print(f"Error fetching Wikipedia page content: {e}")
+        print(f"获取 Wikipedia 页面内容时出错：{e}")
         return None
     except Exception as e:
-        print(f"An error occurred during Wikipedia page parsing: {e}")
+        print(f"Wikipedia 页面解析过程中发生错误：{e}")
         return None
