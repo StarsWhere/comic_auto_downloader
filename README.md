@@ -1,5 +1,31 @@
 # Comic Auto Downloader
 
+<!-- starswhere-docs-overview -->
+
+## 项目概览
+
+**定位**：一个自动化漫画下载工具，结合元数据抓取、章节处理和截图引擎保存内容。
+
+**核心功能**：
+- 章节下载与处理流程
+- 支持 manhuagui、Bangumi、Wikipedia 等元数据来源
+- 截图引擎处理页面内容
+- 包含元数据配置和工具函数
+
+**技术栈**：Python、网页抓取、截图自动化、元数据解析；Python 环境建议使用 uv。
+
+**目录与模块**：`main.py` 是入口；`chapter_downloader/` 负责章节处理和截图；`metadata/` 管理配置、工具和各站点 scraper。
+
+**使用方式**：使用 `uv` 准备 Python 环境后运行 `uv run main.py`，并按 metadata 配置选择目标漫画。
+
+**配置说明**：`metadata/config.py` 定义元数据和下载相关参数。
+
+**适用场景**：适合个人漫画资料整理、元数据补全和离线归档。
+
+**注意事项**：抓取和下载应遵守目标站点规则与版权要求；避免高频请求影响站点服务。
+
+<!-- /starswhere-docs-overview -->
+
 Comic Auto Downloader 是一个 Python 脚本，旨在自动化搜索、获取元数据和下载漫画章节的过程。它首先会检查本地是否存在漫画数据，如果不存在，则会从网络上获取元数据（如 Manhuagui、Bangumi、Wikipedia）并提示用户确认，然后下载漫画章节。对于已存在的漫画，它会直接开始下载未完成的章节。
 
 ## 主要功能
